@@ -101,7 +101,7 @@
 
   .fruit-pos{
     position:absolute;
-    width:110px; height:110px;
+    width:170px; height:170px;
     top:0; left:0;
     will-change:transform, opacity;
     cursor:grab;
@@ -219,7 +219,7 @@
   .typing{ font-size:0.7rem; color:#D8CFF0; text-align:center; height:14px; margin-bottom:2px; }
 
   @media (max-width:420px){
-    .fruit-pos{ width:82px; height:82px; }
+    .fruit-pos{ width:128px; height:128px; }
     .vangogh-pos{ width:140px; height:180px; }
     .chatLog{ max-height:90px; }
     .quickReplies{ font-size:0.72rem; }
@@ -244,9 +244,9 @@
     -webkit-user-drag:none;
     filter:drop-shadow(0 4px 5px rgba(0,0,0,0.3));
   }
-  .vangogh-pos.bob{ animation:vgBob 3.2s ease-in-out infinite; }
+  .vg-inner.bob{ animation:vgBob 3.2s ease-in-out infinite; }
   @keyframes vgBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
-  .vangogh-pos.flinch{ animation:vgFlinch 0.5s ease !important; }
+  .vg-inner.flinch{ animation:vgFlinch 0.5s ease !important; }
   @keyframes vgFlinch{ 0%,100%{transform:translate(0,0) rotate(0deg);} 30%{transform:translate(-6px,-4px) rotate(-6deg);} 60%{transform:translate(5px,-2px) rotate(5deg);} }
   .vangogh-pos.talk .vg-inner{ animation:vgTalk 0.5s ease infinite; }
   @keyframes vgTalk{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.05); } }
@@ -857,10 +857,10 @@ runCastScheduler();
 class Painter{
   constructor(){
     this.el = document.createElement('div');
-    this.el.className = 'vangogh-pos bob';
+    this.el.className = 'vangogh-pos';
 
     this.inner = document.createElement('div');
-    this.inner.className = 'vg-inner';
+    this.inner.className = 'vg-inner bob';
     this.inner.style.width = '100%';
     this.inner.style.height = '100%';
 
@@ -920,9 +920,9 @@ class Painter{
       if(!moved){
         this.poke();
       } else {
-        this.el.classList.add('flinch');
+        this.inner.classList.add('flinch');
         this.say(randomFrom(VANGOGH.pokeLines));
-        setTimeout(()=>this.el.classList.remove('flinch'), 500);
+        setTimeout(()=>this.inner.classList.remove('flinch'), 500);
         // wherever he's dropped becomes his new home base
         this.anchorX = this.x;
         this.anchorY = this.y;
@@ -935,9 +935,9 @@ class Painter{
 
   poke(){
     if(this.busy) return;
-    this.el.classList.add('flinch');
+    this.inner.classList.add('flinch');
     this.say(randomFrom(VANGOGH.pokeLines));
-    setTimeout(()=>this.el.classList.remove('flinch'), 500);
+    setTimeout(()=>this.inner.classList.remove('flinch'), 500);
     registerInteraction(8);
   }
 
@@ -961,14 +961,14 @@ class Painter{
 
   flinch(){
     if(this.busy || this.dragging) return;
-    this.el.classList.add('flinch');
+    this.inner.classList.add('flinch');
     this.say(randomFrom(VANGOGH.flinchLines), 1600);
     setTimeout(()=>{
       this.setPose(VANGOGH.splat);
       this.say(randomFrom(VANGOGH.splatLines));
     }, 350);
     setTimeout(()=>{
-      this.el.classList.remove('flinch');
+      this.inner.classList.remove('flinch');
       this.setPose(VANGOGH.painting);
     }, 1250);
   }
