@@ -108,7 +108,7 @@ class handler(BaseHTTPRequestHandler):
         except Exception as e:
             # Fail quietly with a 200 + fallback-friendly shape so the
             # frontend's own FALLBACK_LINES pool kicks in seamlessly.
-            self._send_json(200, {"reply": None, "error": str(e)})
+            self._send_json(200, {"reply": None, "error": f"{e} | model_used={GEMINI_MODEL}"})
 
     def do_GET(self):
         self._send_json(200, {"status": "ok", "message": "POST to this endpoint to chat."})
