@@ -72,8 +72,12 @@ def call_gemini(api_key: str, system_prompt: str, instruction: str, history: lis
         method="POST",
     )
 
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Gemini HTTP {e.code}: {body[:300]}")
 
     candidates = data.get("candidates", [])
     if not candidates:
