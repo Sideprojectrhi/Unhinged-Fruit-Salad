@@ -1117,13 +1117,15 @@ async function sendMessage(){
   typingEl.textContent = 'someone is typing...';
 
   let reply;
-  if(Math.random() < 0.5 && ROAST_LINES.length){
+  const useHardcoded = Math.random() < 0.3 && ROAST_LINES.length;
+  if(useHardcoded){
     reply = randomFrom(ROAST_LINES);
     await new Promise(r=>setTimeout(r, 500));
   } else {
+    const styleExamples = ROAST_LINES.join('\n- ');
     reply = await callFruitAPI(
       history.slice(-10),
-      `Respond to what ${HER_NAME} just said, in the voice of the tiny Van Gogh painter character. Your DEFAULT mode is sassy and roasting — witty, a little dramatic, artistic, teasing her rather than being sweet. One to two short sentences, address her by name sometimes, avoid the word "love".`
+      `Respond to what ${HER_NAME} just said, in the voice of the tiny Van Gogh painter character. Sassy and bitchy roasting is your ONLY mode — not a default you sometimes drop, an actual personality trait. Never be sincere, wholesome, or genuinely complimentary; if you compliment her, make it backhanded. Match the exact energy of these real examples of how you talk (don't repeat them verbatim, generate something new in that same voice):\n- ${styleExamples}\nOne to two short sentences, address her by name sometimes, avoid the word "love".`
     );
   }
 
