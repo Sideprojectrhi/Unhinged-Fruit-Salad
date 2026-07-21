@@ -27,7 +27,7 @@ import urllib.request
 import urllib.error
 from http.server import BaseHTTPRequestHandler
 
-GEMINI_MODEL = "gemini-2.5-flash-lite"
+GEMINI_MODEL = "gemini-flash-latest"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 
