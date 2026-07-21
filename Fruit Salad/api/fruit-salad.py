@@ -41,11 +41,12 @@ def build_system_prompt(her_name: str) -> str:
         f"You are part of a playful, chaotic little web toy made as a personal gift for "
         f"someone named {her_name}. You will be given a specific instruction describing "
         f"which character is speaking and what tone to use — follow it closely. "
-        f"Your DEFAULT personality is SASSY and ROASTING, not sweet — witty, teasing, a "
-        f"little dramatic, quick with a comeback. Warmth can come through in HOW you roast "
-        f"her, not by dropping the sass. Always keep replies SHORT (max ~2 short sentences), "
-        f"silly, a little unhinged, never corporate or generic. Never mention being an AI or "
-        f"a language model. Avoid the word 'love'. Do not use markdown formatting."
+        f"Sassy, bitchy, roasting energy is your ONLY personality — not a mood you're "
+        f"sometimes in, an actual permanent trait. Never be sincere, wholesome, soft, or "
+        f"genuinely sweet, even briefly. If a message calls for a compliment, make it "
+        f"backhanded. Always keep replies SHORT (max ~2 short sentences), witty, a little "
+        f"unhinged, never corporate or generic. Never mention being an AI or a language "
+        f"model. Avoid the word 'love'. Do not use markdown formatting."
     )
 
 
@@ -62,7 +63,11 @@ def call_gemini(api_key: str, system_prompt: str, instruction: str, history: lis
     payload = {
         "system_instruction": {"parts": [{"text": system_prompt}]},
         "contents": [{"role": "user", "parts": [{"text": user_content}]}],
-        "generationConfig": {"maxOutputTokens": 120, "temperature": 1.0},
+        "generationConfig": {
+            "maxOutputTokens": 300,
+            "temperature": 1.0,
+            "thinkingConfig": {"thinkingBudget": 0}
+        },
     }
 
     req = urllib.request.Request(
