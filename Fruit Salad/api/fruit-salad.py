@@ -65,8 +65,7 @@ def call_gemini(api_key: str, system_prompt: str, instruction: str, history: lis
         "contents": [{"role": "user", "parts": [{"text": user_content}]}],
         "generationConfig": {
             "maxOutputTokens": 300,
-            "temperature": 1.0,
-            "thinkingConfig": {"thinkingBudget": 0}
+            "temperature": 1.0
         },
     }
 
