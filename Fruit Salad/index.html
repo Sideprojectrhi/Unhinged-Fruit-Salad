@@ -1087,6 +1087,8 @@ function addBubble(sender, text){
 }
 
 /* ---------- AI call (proxy not built yet — falls back safely) ---------- */
+let isQuickReply = false;
+
 async function callFruitAPI(conversation, instruction){
   try{
     const res = await fetch('/api/fruit-salad', {
@@ -1117,7 +1119,9 @@ async function sendMessage(){
   typingEl.textContent = 'someone is typing...';
 
   let reply;
-  const useHardcoded = Math.random() < 0.3 && ROAST_LINES.length;
+  const hardcodedThreshold = isQuickReply ? 0.5 : 0.15;
+  const useHardcoded = Math.random() < hardcodedThreshold && ROAST_LINES.length;
+  isQuickReply = false;
   if(useHardcoded){
     reply = randomFrom(ROAST_LINES);
     await new Promise(r=>setTimeout(r, 500));
@@ -1150,6 +1154,7 @@ QUICK_REPLIES.forEach(text => {
   btn.textContent = text;
   btn.addEventListener('click', ()=>{
     msgInput.value = text;
+    isQuickReply = true;
     sendMessage();
   });
   quickRepliesEl.appendChild(btn);
