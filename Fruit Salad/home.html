@@ -39,6 +39,20 @@
   </div>
 </div>
 
+<!-- Check-in modal -->
+<div id="checkInModal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose" title="close">&times;</button>
+    <h3 class="modal-title">hey, how are you doing?</h3>
+    <div class="modal-options">
+      <button class="modal-btn reply" id="modalReplyOkay">I'm okay</button>
+      <button class="modal-btn reply" id="modalReplyNotGreat">not great, honestly</button>
+      <a href="rant.html" class="modal-btn rant">I need to rant</a>
+      <button class="modal-btn dismiss" id="modalDismiss">I'm good</button>
+    </div>
+  </div>
+</div>
+
 <script src="shared.js"></script>
 <script>
 /* =====================================================================
@@ -288,8 +302,57 @@ function init(){
 }
 init();
 
+/* ---------- check-in modal ---------- */
+function initCheckInModal(){
+  // Only show once per session
+  if(sessionStorage.getItem('checkInModalShown')) return;
+
+  const modal = document.getElementById('checkInModal');
+  const closeBtn = document.getElementById('modalClose');
+  const dismissBtn = document.getElementById('modalDismiss');
+  const replyOkayBtn = document.getElementById('modalReplyOkay');
+  const replyNotGreatBtn = document.getElementById('modalReplyNotGreat');
+
+  function closeModal(){
+    modal.classList.remove('show');
+    sessionStorage.setItem('checkInModalShown', '1');
+  }
+
+  // Show modal after 15-20 seconds
+  const delay = 15000 + Math.random() * 5000;
+  setTimeout(()=>{
+    modal.classList.add('show');
+  }, delay);
+
+  // Close handlers
+  closeBtn.addEventListener('click', closeModal);
+  dismissBtn.addEventListener('click', closeModal);
+
+  // Quick reply handlers (send as chat message)
+  replyOkayBtn.addEventListener('click', ()=>{
+    msgInput.value = 'I\'m okay';
+    sendMessage();
+    closeModal();
+  });
+
+  replyNotGreatBtn.addEventListener('click', ()=>{
+    msgInput.value = 'not great, honestly';
+    sendMessage();
+    closeModal();
+  });
+
+  // Close on escape key
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && modal.classList.contains('show')){
+      closeModal();
+    }
+  });
+}
+initCheckInModal();
+
 /* ---------- game loop ---------- */
 runGameLoop(painter, fruits);
+
 </script>
 
 </body>
