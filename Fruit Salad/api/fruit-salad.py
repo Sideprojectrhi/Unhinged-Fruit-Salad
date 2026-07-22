@@ -88,9 +88,9 @@ def call_gemini(api_key: str, system_prompt: str, instruction: str, history: lis
     user_content = f"{instruction}\n\nRecent conversation:\n{convo_text}" if convo_text else instruction
 
     # Adjust maxOutputTokens based on mode
-    max_tokens = 1000
+    max_tokens = 2500
     if mode == "rant":
-        max_tokens = 2000  # Rants may need longer responses
+        max_tokens = 4500  # Rants may need longer responses
     elif mode == "roast":
         max_tokens = 800   # Roasts are typically shorter/punchier
 
