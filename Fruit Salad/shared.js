@@ -112,6 +112,16 @@ const VANGOGH = {
 function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
+// Floating speech bubbles show a short preview only; the full text always
+// still goes to the persistent chat log separately.
+function truncateForBubble(text, maxLen=120){
+  if(text.length <= maxLen) return text;
+  const sentenceMatch = text.match(/^.{1,}?[.!?](\s|$)/);
+  const sentence = sentenceMatch ? sentenceMatch[0].trim() : null;
+  const preview = (sentence && sentence.length <= maxLen) ? sentence : text.slice(0, maxLen).trim();
+  return preview + '\u2026';
+}
+
 let audioCtx = null;
 let ambientNodes = null;
 let soundOn = false;
@@ -424,7 +434,7 @@ class Painter{
   }
 
   say(text, ms=5000){
-    this.bubble.textContent = text;
+    this.bubble.textContent = truncateForBubble(text);
     this.bubble.classList.add('show');
     this.el.classList.add('talk');
     clearTimeout(this.bubbleTimer);

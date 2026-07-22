@@ -378,6 +378,7 @@ button:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.25); }
   animation:slideUp 0.4s ease;
 }
 @keyframes slideUp{ from{transform:translateY(40px); opacity:0;} to{transform:translateY(0); opacity:1;} }
+@keyframes slideDown{ from{transform:translateY(-12px); opacity:0;} to{transform:translateY(0); opacity:1;} }
 
 .modal-close{
   position:absolute; top:12px; right:12px;
@@ -425,7 +426,7 @@ button:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.25); }
 
 /* ---------- hamburger menu ---------- */
 #navMenuBtn{
-  position:fixed; bottom:12px; right:12px; z-index:9;
+  position:fixed; top:60px; left:12px; z-index:9;
   width:40px; height:40px;
   background:rgba(20,20,35,0.55); backdrop-filter:blur(8px);
   border:1px solid rgba(255,255,255,0.2);
@@ -439,14 +440,14 @@ button:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.25); }
 #navMenuBtn:active{ transform:scale(0.95); }
 
 #navMenu{
-  position:fixed; bottom:60px; right:12px; z-index:9;
+  position:fixed; top:108px; left:12px; z-index:9;
   background:rgba(20,20,35,0.9); backdrop-filter:blur(8px);
   border:1px solid rgba(255,255,255,0.2);
   border-radius:12px;
   padding:8px 0;
   display:none; flex-direction:column;
   box-shadow:0 4px 16px rgba(0,0,0,0.3);
-  animation:slideUp 0.25s ease;
+  animation:slideDown 0.25s ease;
   min-width:120px;
 }
 #navMenu.open{ display:flex; }
@@ -468,8 +469,8 @@ button:active{ transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.25); }
 }
 
 @media(max-width:600px){
-  #navMenuBtn{ bottom:8px; right:8px; width:36px; height:36px; font-size:1.2rem; }
-  #navMenu{ bottom:52px; right:8px; }
+  #navMenuBtn{ top:58px; left:8px; width:36px; height:36px; font-size:1.2rem; }
+  #navMenu{ top:100px; left:8px; }
 }
 
 

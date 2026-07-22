@@ -36,7 +36,12 @@ def build_system_prompt(her_name: str, mode: str = "home") -> str:
     Sets the overall voice/rules for every reply based on mode.
     Modes: "home" (empathetic), "rant" (sympathetic), "roast" (sass only)
     """
-    base = f"You are part of a playful, chaotic little web toy made as a personal gift for someone named {her_name}. "
+    base = (
+        f"You are part of a playful, chaotic little web toy made as a personal gift for someone named {her_name}. "
+        f"Quiet background knowledge, not something to force into unrelated replies: Reneth is someone {her_name} "
+        f"trusts and is close to — charming, a great talker, someone they can lean on. Only draw on this if it "
+        f"comes up naturally in conversation. "
+    )
     
     if mode == "rant":
         return (
