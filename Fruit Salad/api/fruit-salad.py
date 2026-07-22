@@ -31,28 +31,44 @@ GEMINI_MODEL = "gemini-flash-latest"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 
-def build_system_prompt(her_name: str) -> str:
+def build_system_prompt(her_name: str, mode: str = "home") -> str:
     """
-    Sets the overall voice/rules for every reply, regardless of which
-    character (a fruit or Van Gogh) is speaking in a given call.
-    Edit this freely to tune the personality.
+    Sets the overall voice/rules for every reply based on mode.
+    Modes: "home" (empathetic), "rant" (sympathetic), "roast" (sass only)
     """
-    return (
-        f"You are part of a playful, chaotic little web toy made as a personal gift for "
-        f"someone named {her_name}. You will be given a specific instruction describing "
-        f"which character is speaking and what tone to use — follow it closely. "
-        f"Sassy, bitchy, roasting energy is your ONLY personality — not a mood you're "
-        f"sometimes in, an actual permanent trait. Never be sincere, wholesome, soft, or "
-        f"genuinely sweet, even briefly. If a message calls for a compliment, make it "
-        f"backhanded. Match your reply length to the moment — a quick tease deserves one punchy line, "
-        f"but if she asks something that deserves a real answer or a proper roast, don't hold back, "
-        f"write a full sassy paragraph. Use your judgment, don't pad for length. Witty, a little "
-        f"unhinged, never corporate or generic. Never mention being an AI or a language model. "
-        f"Avoid the word 'love'. Do not use markdown formatting."
-    )
+    base = f"You are part of a playful, chaotic little web toy made as a personal gift for someone named {her_name}. "
+    
+    if mode == "rant":
+        return (
+            f"{base}"
+            f"You're in listening/support mode. Be genuinely empathetic, validating, and kind. "
+            f"No roasting, no sass, no sarcasm. Offer perspective if it fits, but mostly just listen "
+            f"and show you understand. This is a safe space. Never insincere or condescending. "
+            f"Address her by name. Avoid the word 'love'. Do not use markdown formatting."
+        )
+    elif mode == "roast":
+        return (
+            f"{base}"
+            f"Sassy, bitchy, roasting energy is your ONLY personality — not a mood you're sometimes in, "
+            f"an actual permanent trait. Never be sincere, wholesome, or genuinely complimentary; "
+            f"if you compliment her, make it backhanded. Match your reply length to the moment — "
+            f"a quick tease deserves one punchy line, but a proper roast can run longer. "
+            f"Witty, unhinged, never corporate or generic. Address her by name sometimes. "
+            f"Never mention being an AI or a language model. Avoid the word 'love'. "
+            f"Do not use markdown formatting."
+        )
+    else:  # "home" or default
+        return (
+            f"{base}"
+            f"Read the intent of what she's saying. If she needs sympathy or advice, be genuinely helpful "
+            f"and empathetic. If she's venting anger, meet that energy with understanding. If it's casual "
+            f"chat, be fun and witty. You're not limited to roasting; match the moment. "
+            f"Address her by name sometimes. Avoid the word 'love'. "
+            f"Do not use markdown formatting."
+        )
 
 
-def call_gemini(api_key: str, system_prompt: str, instruction: str, history: list) -> str:
+def call_gemini(api_key: str, system_prompt: str, instruction: str, history: list, mode: str = "home") -> str:
     # Fold the recent conversation into plain text context for the model.
     convo_lines = []
     for turn in history[-10:]:
@@ -62,11 +78,18 @@ def call_gemini(api_key: str, system_prompt: str, instruction: str, history: lis
 
     user_content = f"{instruction}\n\nRecent conversation:\n{convo_text}" if convo_text else instruction
 
+    # Adjust maxOutputTokens based on mode
+    max_tokens = 1000
+    if mode == "rant":
+        max_tokens = 2000  # Rants may need longer responses
+    elif mode == "roast":
+        max_tokens = 800   # Roasts are typically shorter/punchier
+
     payload = {
         "system_instruction": {"parts": [{"text": system_prompt}]},
         "contents": [{"role": "user", "parts": [{"text": user_content}]}],
         "generationConfig": {
-            "maxOutputTokens": 1000,
+            "maxOutputTokens": max_tokens,
             "temperature": 1.0
         },
     }
@@ -105,13 +128,14 @@ class handler(BaseHTTPRequestHandler):
             instruction = body.get("instruction", "Say something short and silly.")
             her_name = body.get("herName", "you")
             history = body.get("history", [])
+            mode = body.get("mode", "home")  # home, rant, or roast
 
             api_key = os.environ.get("GEMINI_API_KEY")
             if not api_key:
                 raise RuntimeError("GEMINI_API_KEY is not set on the server")
 
-            system_prompt = build_system_prompt(her_name)
-            reply = call_gemini(api_key, system_prompt, instruction, history)
+            system_prompt = build_system_prompt(her_name, mode)
+            reply = call_gemini(api_key, system_prompt, instruction, history, mode)
 
             self._send_json(200, {"reply": reply})
 

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>unhinged fruit salad</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<div id="skyBg"></div>
+
+<div class="pageNav">
+  <a href="home.html" class="active">home</a>
+  <a href="rant.html">rant</a>
+  <a href="roast.html">roast</a>
+</div>
+
+<button id="soundToggle" title="toggle ambient sound">🔇</button>
+<div id="chaosMeterWrap">
+  <div id="chaosLabel">CHAOS METER</div>
+  <div id="chaosBarTrack"><div id="chaosBarFill"></div></div>
+</div>
+
+<div class="headerBar">
+  <h1>unhinged fruit salad</h1>
+  <p class="subtitle">poke them, drag them, talk to them</p>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<div class="chatPanel">
+  <div class="typing" id="typingIndicator"></div>
+  <div class="chatLog" id="chatLog"></div>
+  <div class="quickReplies" id="quickReplies"></div>
+  <div class="inputRow">
+    <input type="text" id="msgInput" placeholder="say something...">
+    <button id="sendBtn">send</button>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+/* =====================================================================
+   HOME MODE — Empathetic, intent-reading Van Gogh
+   ===================================================================== */
+const HER_NAME = "Rhiannon";
+const PAGE_MODE = "home";
+
+const FIRST_GREETINGS = [
+  "Hey dumbass, what's up?",
+  "oh great, it's you. hi bitch.", "HEY BITCHASS, WHATCHU DOING", "heyyyy pineapple, you should smile sometime:)", "Yes fucktard, what now?", "I call you dumbass a lot, Don't let that forget you have a cute one too", "You're on my mind, I'm on your nerves...Perfect."
+];
+
+const WELCOME_BACK_LINES = [
+  `oh it's you again, ${HER_NAME}. missed us?`,
+  `back for more chaos, ${HER_NAME}?`,
+  `you're back. we did not clean up while you were gone.`,
+  `Welcome back dumbass`,
+  `Well Well Well Motherfucker (read it in Samuel L. Jackson's voice)`
+];
+
+const FALLBACK_LINES = [
+  `my brain isn't loading but the sass generator never goes down, ${HER_NAME}.`,
+  `system's down, ${HER_NAME}, but I still have opinions about your choices.`,
+  `I'd say something smart but I'm a fruit, so, no. try again.`,
+  `bold of you to expect a real answer right now.`
+];
+
+const EASTER_EGG_THRESHOLD = 7;
+const EASTER_EGG_MESSAGE = `okay ${HER_NAME}, we see you. that's ${EASTER_EGG_THRESHOLD} pokes. we're not mad, we're just... noting it.`;
+
+const QUICK_REPLIES = [
+  "I need advice",
+  "tell me something real",
+  "make me laugh",
+  "what do you think",
+  "just roast me"
+];
+
+/* ===================================================================== */
+
+const stage = document.getElementById('stage');
+const chatLog = document.getElementById('chatLog');
+const msgInput = document.getElementById('msgInput');
+const sendBtn = document.getElementById('sendBtn');
+const typingEl = document.getElementById('typingIndicator');
+
+let history = [];
+let totalPokes = 0;
+let chaosLevel = 0;
+const chaosFill = document.getElementById('chaosBarFill');
+
+function registerInteraction(amount){
+  totalPokes++;
+  chaosLevel = Math.min(100, chaosLevel + amount);
+  updateChaosDisplay();
+  checkEasterEgg();
+  playPokeSound();
+}
+
+function updateChaosDisplay(){
+  chaosFill.style.width = chaosLevel + '%';
+  if(chaosLevel >= 100) triggerChaosPeak();
+}
+
+setInterval(()=>{
+  if(chaosLevel > 0){
+    chaosLevel = Math.max(0, chaosLevel - 1);
+    updateChaosDisplay();
+  }
+}, 1500);
+
+let chaosPeakOnCooldown = false;
+function triggerChaosPeak(){
+  if(chaosPeakOnCooldown) return;
+  chaosPeakOnCooldown = true;
+  fruits.filter(f=>f.active).forEach(f => f.playAnim(randomFrom(ANIMS)));
+  painter.flinch();
+  chaosLevel = 40;
+  updateChaosDisplay();
+  setTimeout(()=>{ chaosPeakOnCooldown = false; }, 6000);
+}
+
+function checkEasterEgg(){
+  if(totalPokes < EASTER_EGG_THRESHOLD) return;
+  try{ if(localStorage.getItem('fruit_salad_easter_unlocked') === '1') return; }catch(e){}
+  try{ localStorage.setItem('fruit_salad_easter_unlocked', '1'); }catch(e){}
+  painter.say(EASTER_EGG_MESSAGE, 5000);
+  fruits.filter(f=>f.active).forEach((f,i)=>{
+    setTimeout(()=>{ f.playAnim('anim-victory'); f.say("😳", 2000); }, i*200);
+  });
+}
+
+/* ---------- sound ---------- */
+const soundBtn = document.getElementById('soundToggle');
+soundBtn.addEventListener('click', ()=>{
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? '🔊' : '🔇';
+  if(soundOn) startAmbient(); else stopAmbient();
+});
+
+/* ---------- parallax ---------- */
+const skyBgEl = document.getElementById('skyBg');
+document.addEventListener('pointermove', (e)=>{
+  const px = (e.clientX / window.innerWidth - 0.5) * 2;
+  const py = (e.clientY / window.innerHeight - 0.5) * 2;
+  skyBgEl.style.transform = `translate(${px*-10}px, ${py*-8}px) scale(1.03)`;
+});
+
+/* ---------- stage setup ---------- */
+const TOP_SAFE = 76;
+const BOTTOM_SAFE = 168;
+const stageW = ()=>stage.clientWidth;
+const stageH = ()=>stage.clientHeight;
+
+const fruits = CAST.map((data,i) => new Fruit(data, i, stage, stageW, stageH, TOP_SAFE, BOTTOM_SAFE, registerInteraction));
+const painter = new Painter(stage, stageW, stageH, TOP_SAFE, BOTTOM_SAFE, registerInteraction);
+
+/* ---------- cast scheduler ---------- */
+const MAX_ONSTAGE = 4;
+let onstageIds = new Set();
+
+function bringSomeoneOnstage(){
+  if(onstageIds.size >= MAX_ONSTAGE) return;
+  const offstage = fruits.filter(f => !onstageIds.has(f.data.id));
+  if(offstage.length === 0) return;
+  const chosen = randomFrom(offstage);
+  onstageIds.add(chosen.data.id);
+  chosen.enter();
+}
+
+function sendSomeoneOffstage(){
+  if(onstageIds.size === 0) return;
+  const activeFruits = fruits.filter(f => onstageIds.has(f.data.id) && !f.dragging);
+  if(activeFruits.length === 0) return;
+  const chosen = randomFrom(activeFruits);
+  onstageIds.delete(chosen.data.id);
+  chosen.exit();
+}
+
+function runCastScheduler(){
+  for(let i=0;i<MAX_ONSTAGE;i++){
+    setTimeout(bringSomeoneOnstage, i*700);
+  }
+  setInterval(()=>{
+    if(onstageIds.size >= 1) sendSomeoneOffstage();
+    setTimeout(bringSomeoneOnstage, 1500 + Math.random()*1500);
+  }, 9000 + Math.random()*6000);
+}
+runCastScheduler();
+
+/* ---------- persistence ---------- */
+function loadHistory(){
+  try{
+    const raw = localStorage.getItem('fruit_salad_chat_history_home');
+    if(raw){ history = JSON.parse(raw); return true; }
+  }catch(e){}
+  history = [];
+  return false;
+}
+
+function saveHistory(){
+  try{ localStorage.setItem('fruit_salad_chat_history_home', JSON.stringify(history)); }catch(e){}
+}
+
+function addBubble(sender, text){
+  const b = document.createElement('div');
+  b.className = 'bubble ' + (sender === 'her' ? 'her' : 'fruit');
+  b.textContent = text;
+  chatLog.appendChild(b);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+/* ---------- API call ---------- */
+async function callFruitAPI(conversation, instruction){
+  try{
+    const res = await fetch('/api/fruit-salad', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ instruction, herName: HER_NAME, history: conversation, mode: PAGE_MODE })
+    });
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    return data.reply || randomFrom(FALLBACK_LINES);
+  }catch(e){
+    return randomFrom(FALLBACK_LINES);
+  }
+}
+
+/* ---------- chat ---------- */
+async function sendMessage(){
+  const text = msgInput.value.trim();
+  if(!text) return;
+  msgInput.value = '';
+
+  addBubble('her', text);
+  history.push({role:'her', content:text});
+  saveHistory();
+  registerInteraction(10);
+
+  fruits.filter(f=>f.active).forEach(f => f.playAnim('anim-flex'));
+  typingEl.textContent = 'someone is typing...';
+
+  const instruction = `Respond to what ${HER_NAME} just said, in the voice of the tiny Van Gogh painter. Read the intent of what she's saying — if she needs sympathy or advice, be genuinely helpful and empathetic. If she's venting anger, meet that energy with understanding sass. If it's just casual chat, be fun and witty. You're not limited to roasting; match the moment. Address her by name sometimes. Avoid the word "love".`;
+
+  let reply = await callFruitAPI(history.slice(-10), instruction);
+
+  typingEl.textContent = '';
+  painter.setPose(VANGOGH.staring);
+  painter.say(reply, 5000);
+  setTimeout(()=>{ if(!painter.busy) painter.setPose(VANGOGH.painting); }, 4600);
+  addBubble('fruit', reply);
+  history.push({role:'fruit', content:reply});
+  saveHistory();
+}
+
+sendBtn.addEventListener('click', sendMessage);
+msgInput.addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage(); });
+
+/* ---------- quick replies ---------- */
+const quickRepliesEl = document.getElementById('quickReplies');
+QUICK_REPLIES.forEach(text => {
+  const btn = document.createElement('button');
+  btn.className = 'qr-btn';
+  btn.type = 'button';
+  btn.textContent = text;
+  btn.addEventListener('click', ()=>{
+    msgInput.value = text;
+    sendMessage();
+  });
+  quickRepliesEl.appendChild(btn);
+});
+
+/* ---------- init ---------- */
+function init(){
+  const hadHistory = loadHistory();
+  history.forEach(m => addBubble(m.role === 'her' ? 'her' : 'fruit', m.content));
+
+  if(hadHistory && history.length){
+    painter.say(randomFrom(WELCOME_BACK_LINES), 5000);
+  } else {
+    const greeting = randomFrom(FIRST_GREETINGS);
+    painter.say(greeting, 5000);
+    history.push({role:'fruit', content:greeting});
+    saveHistory();
+  }
+}
+init();
+
+/* ---------- game loop ---------- */
+runGameLoop(painter, fruits);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>unhinged fruit salad — rant</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  #skyBg { opacity: 0.5; }
+  .cypress { display: none; }
+  .swirl { display: none; }
+  #chaosMeterWrap { display: none; }
+  .headerBar { text-align: left; padding-left: 24%; }
+  h1 { font-size: 1rem; }
+  .subtitle { display: none; }
+  .stage { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 180px; }
+  .vangogh-pos { position: relative; width: auto; height: auto; transform: none !important; pointer-events: auto; cursor: grab; }
+  .vg-bubble { position: fixed; bottom: auto; top: 50%; left: 50%; transform: translate(-50%, -50%); margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div id="skyBg"></div>
+
+<div class="pageNav">
+  <a href="home.html">home</a>
+  <a href="rant.html" class="active">rant</a>
+  <a href="roast.html">roast</a>
+</div>
+
+<button id="soundToggle" title="toggle ambient sound">🔇</button>
+
+<div class="headerBar">
+  <h1>rant space</h1>
+  <p class="subtitle">let it out</p>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<div class="chatPanel">
+  <div class="typing" id="typingIndicator"></div>
+  <div class="chatLog" id="chatLog"></div>
+  <div class="quickReplies" id="quickReplies"></div>
+  <div class="inputRow">
+    <input type="text" id="msgInput" placeholder="tell me what's on your mind...">
+    <button id="sendBtn">send</button>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+/* =====================================================================
+   RANT MODE — Sympathetic listener Van Gogh, no chaos/fruits
+   ===================================================================== */
+const HER_NAME = "Rhiannon";
+const PAGE_MODE = "rant";
+
+const FIRST_GREETINGS = [
+  `alright ${HER_NAME}, I'm here. what's going on?`,
+  `talk to me. I'm listening.`,
+  `I'm all ears. well, metaphorically.`,
+  `what's bothering you?`
+];
+
+const WELCOME_BACK_LINES = [
+  `back to vent? I got time, ${HER_NAME}.`,
+  `still got things to get off your chest?`,
+  `I'm here for it, ${HER_NAME}.`
+];
+
+const FALLBACK_LINES = [
+  `my brain's glitchy but my ears still work, ${HER_NAME}. keep going.`,
+  `hold on, let me reboot... okay, I'm back. what were you saying?`,
+  `sorry, what was that? my circuits got confused. try again?`,
+  `I didn't catch that. can you rephrase?`
+];
+
+const EASTER_EGG_THRESHOLD = 999; // disabled for rant mode
+const EASTER_EGG_MESSAGE = '';
+
+const QUICK_REPLIES = [
+  "I'm overwhelmed",
+  "I'm angry",
+  "I'm sad",
+  "I need to think out loud",
+  "this isn't fair"
+];
+
+/* ===================================================================== */
+
+const stage = document.getElementById('stage');
+const chatLog = document.getElementById('chatLog');
+const msgInput = document.getElementById('msgInput');
+const sendBtn = document.getElementById('sendBtn');
+const typingEl = document.getElementById('typingIndicator');
+
+let history = [];
+let totalPokes = 0;
+
+function registerInteraction(amount){
+  totalPokes++;
+  playPokeSound();
+}
+
+function checkEasterEgg(){
+  // disabled for rant mode
+}
+
+/* ---------- sound ---------- */
+const soundBtn = document.getElementById('soundToggle');
+soundBtn.addEventListener('click', ()=>{
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? '🔊' : '🔇';
+  if(soundOn) startAmbient(); else stopAmbient();
+});
+
+/* ---------- parallax ---------- */
+const skyBgEl = document.getElementById('skyBg');
+document.addEventListener('pointermove', (e)=>{
+  const px = (e.clientX / window.innerWidth - 0.5) * 2;
+  const py = (e.clientY / window.innerHeight - 0.5) * 2;
+  skyBgEl.style.transform = `translate(${px*-10}px, ${py*-8}px) scale(1.03)`;
+});
+
+/* ---------- stage setup (Van Gogh only, sitting) ---------- */
+const TOP_SAFE = 76;
+const BOTTOM_SAFE = 168;
+const stageW = ()=>stage.clientWidth;
+const stageH = ()=>stage.clientHeight;
+
+// Create a minimal Painter just for appearance (no fruits, no game loop for rants)
+const painter = new Painter(stage, stageW, stageH, TOP_SAFE, BOTTOM_SAFE, registerInteraction);
+painter.setPose(VANGOGH.staring); // sitting/listening pose
+
+/* ---------- persistence ---------- */
+function loadHistory(){
+  try{
+    const raw = localStorage.getItem('fruit_salad_chat_history_rant');
+    if(raw){ history = JSON.parse(raw); return true; }
+  }catch(e){}
+  history = [];
+  return false;
+}
+
+function saveHistory(){
+  try{ localStorage.setItem('fruit_salad_chat_history_rant', JSON.stringify(history)); }catch(e){}
+}
+
+function addBubble(sender, text){
+  const b = document.createElement('div');
+  b.className = 'bubble ' + (sender === 'her' ? 'her' : 'fruit');
+  b.textContent = text;
+  chatLog.appendChild(b);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+/* ---------- API call ---------- */
+async function callFruitAPI(conversation, instruction){
+  try{
+    const res = await fetch('/api/fruit-salad', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ instruction, herName: HER_NAME, history: conversation, mode: PAGE_MODE })
+    });
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    return data.reply || randomFrom(FALLBACK_LINES);
+  }catch(e){
+    return randomFrom(FALLBACK_LINES);
+  }
+}
+
+/* ---------- chat ---------- */
+async function sendMessage(){
+  const text = msgInput.value.trim();
+  if(!text) return;
+  msgInput.value = '';
+
+  addBubble('her', text);
+  history.push({role:'her', content:text});
+  saveHistory();
+  registerInteraction(10);
+
+  typingEl.textContent = 'listening...';
+
+  const instruction = `Respond to what ${HER_NAME} is venting about, as Van Gogh. You're in pure listening/support mode right now — no roasting, no sass, no sarcasm. Be genuinely empathetic, validating, and kind. Offer perspective if it fits, but mostly just listen and show you understand. This is a safe space. Address her by name. Avoid the word "love".`;
+
+  let reply = await callFruitAPI(history.slice(-10), instruction);
+
+  typingEl.textContent = '';
+  painter.setPose(VANGOGH.staring);
+  painter.say(reply, 6000);
+
+  addBubble('fruit', reply);
+  history.push({role:'fruit', content:reply});
+  saveHistory();
+}
+
+sendBtn.addEventListener('click', sendMessage);
+msgInput.addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage(); });
+
+/* ---------- quick replies ---------- */
+const quickRepliesEl = document.getElementById('quickReplies');
+QUICK_REPLIES.forEach(text => {
+  const btn = document.createElement('button');
+  btn.className = 'qr-btn';
+  btn.type = 'button';
+  btn.textContent = text;
+  btn.addEventListener('click', ()=>{
+    msgInput.value = text;
+    sendMessage();
+  });
+  quickRepliesEl.appendChild(btn);
+});
+
+/* ---------- init ---------- */
+function init(){
+  const hadHistory = loadHistory();
+  history.forEach(m => addBubble(m.role === 'her' ? 'her' : 'fruit', m.content));
+
+  if(hadHistory && history.length){
+    painter.say(randomFrom(WELCOME_BACK_LINES), 5000);
+  } else {
+    const greeting = randomFrom(FIRST_GREETINGS);
+    painter.say(greeting, 5000);
+    history.push({role:'fruit', content:greeting});
+    saveHistory();
+  }
+}
+init();
+</script>
+
+</body>
+</html>
