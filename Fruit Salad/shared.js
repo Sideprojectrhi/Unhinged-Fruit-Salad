@@ -547,3 +547,70 @@ function runGameLoop(painter, fruits){
   }
   requestAnimationFrame(loop);
 }
+
+/* ===================================================================== */
+
+function initHamburgerMenu(){
+  // Create hamburger button and menu
+  const navBtn = document.createElement('button');
+  navBtn.id = 'navMenuBtn';
+  navBtn.title = 'menu';
+  navBtn.textContent = '☰';
+  document.body.appendChild(navBtn);
+
+  const navMenu = document.createElement('nav');
+  navMenu.id = 'navMenu';
+
+  const pages = [
+    {href: 'home.html', label: 'Home'},
+    {href: 'rant.html', label: 'Rant'},
+    {href: 'roast.html', label: 'Roast'}
+  ];
+
+  pages.forEach(page => {
+    const link = document.createElement('a');
+    link.href = page.href;
+    link.className = 'nav-link';
+    link.textContent = page.label;
+
+    // Highlight active page
+    const currentPage = window.location.pathname.split('/').pop() || 'home.html';
+    if(currentPage === page.href || (currentPage === '' && page.href === 'home.html')){
+      link.classList.add('active');
+    }
+
+    link.addEventListener('click', () => {
+      navMenu.classList.remove('open');
+    });
+
+    navMenu.appendChild(link);
+  });
+  document.body.appendChild(navMenu);
+
+  // Toggle menu on button click
+  navBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    navMenu.classList.toggle('open');
+  });
+
+  // Close menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if(!e.target.closest('#navMenuBtn') && !e.target.closest('#navMenu')){
+      navMenu.classList.remove('open');
+    }
+  });
+
+  // Close menu on escape key
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && navMenu.classList.contains('open')){
+      navMenu.classList.remove('open');
+    }
+  });
+}
+
+// Initialize hamburger menu on page load
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initHamburgerMenu);
+}else{
+  initHamburgerMenu();
+}
